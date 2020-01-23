@@ -1,0 +1,44 @@
+version: '3'
+
+services:
+  nginx:
+    container_name: nginx
+    image: nginx:latest
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - 80:80
+    links:
+      - frontend
+      - backend
+    depends_on:
+      - frontend
+      - backend
+  postgres:
+    image: postgres
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=me
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=api
+    volumes:
+      - ./postgresql/api.dump:/docker-entrypoint-initdb.d/init.sql
+  frontend:
+    container_name: frontend
+    build: turbo-frontend/
+    command: yarn start
+    ports:
+      - 3000:3000
+  backend:
+    container_name: backend
+    build: turbo-backend/
+    command: node index.js
+    ports:
+        - 3001:3001
+    links:
+      - postgres
+    depends_on:
+      - postgres
+    restart: unless-stopped
